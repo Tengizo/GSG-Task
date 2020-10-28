@@ -30,8 +30,8 @@ public class DomainUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(final String username) {
         log.debug("Authenticating {}", username);
 
-        Optional<User> userByEmailFromDatabase = userRepository.getUserByUsername(username);
-        return userByEmailFromDatabase.map(this::createSpringSecurityUser)
+        Optional<User> user = userRepository.getUserByUsername(username);
+        return user.map(this::createSpringSecurityUser)
                 .orElseThrow(() -> new UsernameNotFoundException("User with username " + username + " was not found in the database"));
     }
 

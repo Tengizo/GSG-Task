@@ -1,0 +1,63 @@
+<div class="justify-content-center row k-title">
+  <h1>Sign Up</h1>
+</div>
+<form class="container-fluid" autocomplete="off" [formGroup]="signUpFor" (submit)="submit()">
+  <div class="row justify-content-center m-3">
+    <mat-form-field class="col-md-6">
+      <mat-label>Username</mat-label>
+      <input matInput placeholder="Username"
+             formControlName="username">
+      <mat-error *ngIf="signUpFor.controls.username.hasError('required') && signUpFor.controls.username.touched">
+        Field is required
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="row justify-content-center m-3">
+    <mat-form-field class="col-md-6">
+      <mat-label>Country</mat-label>
+      <mat-select formControlName="country">
+        <mat-option *ngFor="let country of countries "
+                    [value]="country['code']" >
+          {{country['name']}}
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="signUpFor.controls.country.hasError('required')&&signUpFor.controls.country.touched">
+        Field is required
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="row justify-content-center m-3">
+    <mat-form-field class="col-md-6">
+      <mat-label>Job Interval</mat-label>
+      <input type="number" matInput placeholder="Job Interval"
+             formControlName="jobInterval">
+      <mat-error *ngIf="signUpFor.controls.jobInterval.hasError('required')&&signUpFor.controls.jobInterval.touched">
+        Field is required
+      </mat-error>
+      <mat-error *ngIf="
+      (signUpFor.controls.jobInterval.hasError('min')||signUpFor.controls.jobInterval.hasError('max'))
+      &&signUpFor.controls.jobInterval.touched">
+        Job interval value should be in the range 1 - 60
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class="row justify-content-center m-3">
+    <mat-form-field class="col-md-6">
+      <mat-label>Password</mat-label>
+      <input type="password" matInput placeholder="password"
+             formControlName="password">
+      <mat-error
+        *ngIf="signUpFor.controls.password.hasError('required')&&signUpFor.controls.password.touched">
+        Field is required
+      </mat-error>
+    </mat-form-field>
+  </div>
+<div class="row justify-content-center m-3">
+  <button type="submit" mat-button color="accent" [disabled]="submitting">
+    Sign Up
+  </button>
+</div>
+</form>
+<div class="row justify-content-center">
+  <button type="button" color="primary" mat-button routerLink="/login">Log In</button>
+</div>

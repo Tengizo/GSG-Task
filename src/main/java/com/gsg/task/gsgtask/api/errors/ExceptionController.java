@@ -6,6 +6,7 @@ import com.gsg.task.gsgtask.api.errors.exception.Problem;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -32,10 +33,17 @@ public class ExceptionController {
 
     }
 
+    @ResponseBody
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Problem> getErrorResponse(BadCredentialsException e) {
+        return getEntity(ExceptionType.INVALID_USERNAME_OR_PASSWORD);
+    }
+
     private ResponseEntity<Problem> getEntity(ExceptionType et) {
         Problem problem = Problem.builder()
                 .keyword(et.getKeyWord())
                 .status(et.getStatus())
+                .details(et.getDetails())
                 .build();
         return new ResponseEntity<>(problem, HttpStatus.valueOf(et.getStatus()));
     }
@@ -43,6 +51,7 @@ public class ExceptionController {
     private ResponseEntity<Problem> getEntity(AppException et) {
         Problem problem = Problem.builder()
                 .keyword(et.getType().getKeyWord())
+                .details(et.getType().getDetails())
                 .status(et.getType().getStatus())
                 .build();
         return new ResponseEntity<>(problem, HttpStatus.valueOf(et.getStatus()));

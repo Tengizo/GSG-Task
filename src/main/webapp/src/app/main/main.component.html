@@ -1,0 +1,49 @@
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <h3>Username: &nbsp;&nbsp; {{this.user.username}}</h3>
+    <h3>&nbsp;&nbsp; Id: &nbsp;&nbsp; {{this.user.id}}</h3>
+    <button (click)="logout()" color="primary" mat-button>Logout</button>
+  </div>
+  <form class="container-fluid" autocomplete="off" [formGroup]="updateForm" (submit)="submit()">
+    <div class="row justify-content-center m-3">
+      <mat-form-field class="col-md-6">
+        <mat-label>Country</mat-label>
+        <mat-select formControlName="country">
+          <mat-option *ngFor="let country of countries "
+                      [value]="country['code']">
+            {{country['name']}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="updateForm.controls.country.hasError('required')&&updateForm.controls.country.touched">
+          Field is required
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div class="row justify-content-center m-3">
+      <mat-form-field class="col-md-6">
+        <mat-label>Job Interval</mat-label>
+        <input type="number" matInput placeholder="Job Interval"
+               formControlName="jobInterval">
+        <mat-error
+          *ngIf="updateForm.controls.jobInterval.hasError('required')&&updateForm.controls.jobInterval.touched">
+          Field is required
+        </mat-error>
+        <mat-error *ngIf="
+      (updateForm.controls.jobInterval.hasError('min')||updateForm.controls.jobInterval.hasError('max'))
+      &&updateForm.controls.jobInterval.touched">
+          Job interval value should be in the range 1 - 60
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div class="row justify-content-center">
+      <button type="submit" color="primary" mat-button>Update</button>
+    </div>
+  </form>
+</div>
+<div class="row justify-content-center m-3">
+  <youtube-player *ngIf="user.ytVideoLink" [videoId]="getVideoId()"></youtube-player>
+</div>
+<div class="row justify-content-center m-3" >
+  <h2 class="m-2">Most upvoted comment:</h2>
+  <h3 [innerHTML]="commentText" class="m-2"></h3>
+</div>

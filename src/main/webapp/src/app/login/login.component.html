@@ -1,0 +1,32 @@
+<form class="container-fluid login-form" autocomplete="off" [formGroup]="loginForm" (submit)="submit()">
+  <div class=" row justify-content-center">
+    <mat-form-field>
+      <mat-label>Username</mat-label>
+      <input matInput placeholder="enter your username" formControlName="username">
+      <mat-error *ngIf="loginForm.controls.username.hasError('required') && loginForm.controls.username.touched">
+        Field is required
+      </mat-error>
+    </mat-form-field>
+  </div>
+  <div class=" row justify-content-center">
+    <mat-form-field class="example-full-width">
+      <mat-label>password</mat-label>
+      <input type="password" matInput
+             placeholder="Enter your password"
+             formControlName="password">
+    </mat-form-field>
+  </div>
+  <div *ngIf="loginError.show" class="login-error row justify-content-center">
+    <span>{{loginError.message}}</span>
+  </div>
+  <div class="row justify-content-center">
+    <button mat-button color="primary" type="submit"
+            class="k-button">
+      Log In
+    </button>
+  </div>
+</form>
+<div class="row justify-content-center">
+  <button type="button" color="primary" mat-button routerLink="/sign-up">Sign Up
+  </button>
+</div>

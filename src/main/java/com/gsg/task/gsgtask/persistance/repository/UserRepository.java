@@ -7,19 +7,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,17 +23,62 @@ import java.util.stream.Collectors;
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
 public class UserRepository {
-    private static final String CSV_PATH = "users/users.csv";
-    @Value("classpath:" + CSV_PATH)
-    private Resource resourceFile;
+    private static final String CSV_PATH = "csvDB/users/users.csv";
+    private String CSVAbsolutePath;
     private Map<String, User> userMap;
     private Long maxId;
 
     @PostConstruct
     private void init() {
+        createFile();
         this.userMap = getUsers();
+        if (userMap.size() == 0)
+            createHeaders();
         this.maxId = getMaxId();
 
+    }
+
+    private void createHeaders() {
+        try (
+                BufferedWriter writer = Files.newBufferedWriter(Path.of(CSVAbsolutePath), StandardOpenOption.CREATE);
+                CSVPrinter csvPrinter = new CSVPrinter(writer,
+                        CSVFormat.DEFAULT
+                                .withHeader(UserHeaders.class)
+                                .withFirstRecordAsHeader()
+                )
+        ) {
+            csvPrinter.printRecord(
+                    Arrays.stream(UserHeaders.values()).collect(Collectors.toList())
+            );
+            csvPrinter.flush();
+        } catch (IOException e) {
+            log.error("Error on CSV write: ", e);
+            throw new AppException(ExceptionType.CSV_DB_ERROR);
+        }
+    }
+
+    private void createFile() {
+        String[] dirs = CSV_PATH.split("/");
+        StringBuilder dirPath = new StringBuilder();
+        for (int i = 0; i < dirs.length - 1; i++) {
+            if (i == 0)
+                dirPath.append(dirs[i]);
+            else
+                dirPath.append(File.separator).append(dirs[i]);
+
+            File file = new File(dirPath.toString());
+            if (!file.exists())
+                file.mkdir();
+        }
+        File file = new File(CSV_PATH.replaceAll("//", File.separator));
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        this.CSVAbsolutePath = file.getAbsolutePath();
     }
 
     public Optional<User> getUserByUsername(String username) {
@@ -49,12 +89,18 @@ public class UserRepository {
         return userMap.values().stream().filter(e -> e.getId().equals(id)).findAny();
     }
 
-    public void addUser(User user) {
-        user.setId(generateId());
-        writeUser(user, StandardOpenOption.APPEND);
+    public List<User> getAll() {
+        return new ArrayList<>(userMap.values());
     }
 
-    public void updateUser(User user) {
+    public synchronized User addUser(User user) {
+        user.setId(generateId());
+        writeUser(user, StandardOpenOption.APPEND);
+        userMap.put(user.getUsername(), user);
+        return user;
+    }
+
+    public synchronized void updateUser(User user) {
         Optional<User> userOp = getUserById(user.getId());
         if (userOp.isEmpty()) {
             throw new AppException(ExceptionType.USER_NOT_FOUND);
@@ -66,7 +112,7 @@ public class UserRepository {
         writeMultipleUser(sorted, StandardOpenOption.CREATE);
     }
 
-    public void deleteUser(User user) {
+    public synchronized void deleteUser(User user) {
         Optional<User> userOp = getUserById(user.getId());
         if (userOp.isEmpty()) {
             throw new AppException(ExceptionType.USER_NOT_FOUND);
@@ -79,7 +125,7 @@ public class UserRepository {
 
     private void writeUser(User user, StandardOpenOption... openOptions) {
         try (
-                BufferedWriter writer = Files.newBufferedWriter(resourceFile.getFile().toPath(), openOptions);
+                BufferedWriter writer = Files.newBufferedWriter(Path.of(CSVAbsolutePath), openOptions);
                 CSVPrinter csvPrinter = new CSVPrinter(writer,
                         CSVFormat.DEFAULT
                                 .withHeader(UserHeaders.class)
@@ -97,20 +143,22 @@ public class UserRepository {
             );
             csvPrinter.flush();
         } catch (IOException e) {
-            log.error("Error on CSV write: ",e);
+            log.error("Error on CSV write: ", e);
             throw new AppException(ExceptionType.CSV_DB_ERROR);
         }
     }
 
     private void writeMultipleUser(Collection<User> users, StandardOpenOption... openOptions) {
         try (
-                BufferedWriter writer = Files.newBufferedWriter(resourceFile.getFile().toPath(), openOptions);
+                BufferedWriter writer = Files.newBufferedWriter(Path.of(CSVAbsolutePath), openOptions);
                 CSVPrinter csvPrinter = new CSVPrinter(writer,
                         CSVFormat.DEFAULT
                                 .withHeader(UserHeaders.class)
                                 .withFirstRecordAsHeader()
                 );
         ) {
+            csvPrinter.printRecord(
+                    Arrays.stream(UserHeaders.values()).collect(Collectors.toList()));
             for (User user : users) {
                 csvPrinter.printRecord(
                         user.getId(),
@@ -124,7 +172,7 @@ public class UserRepository {
             }
             csvPrinter.flush();
         } catch (IOException e) {
-            log.error("Error on CSV write: ",e);
+            log.error("Error on CSV write: ", e);
             throw new AppException(ExceptionType.CSV_DB_ERROR);
         }
     }
@@ -145,7 +193,7 @@ public class UserRepository {
     private Map<String, User> getUsers() {
         Map<String, User> users = new HashMap<>();
         try (
-                Reader in = new FileReader(new ClassPathResource(CSV_PATH).getFile())
+                Reader in = new FileReader(new File(CSV_PATH))
         ) {
             Iterable<CSVRecord> records = CSVFormat.RFC4180.withHeader(UserHeaders.class).withFirstRecordAsHeader().parse(in);
             for (CSVRecord record : records) {
@@ -162,7 +210,7 @@ public class UserRepository {
 
             }
         } catch (IOException e) {
-            log.error("Error on CSV read: ",e);
+            log.error("Error on CSV read: ", e);
             throw new AppException(ExceptionType.CSV_DB_ERROR);
         }
         return users;

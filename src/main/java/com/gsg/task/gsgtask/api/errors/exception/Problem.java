@@ -11,5 +11,6 @@ import java.io.Serializable;
 @Builder
 public class Problem implements Serializable {
     private String keyword;
+    private String details;
     private int status;
 }

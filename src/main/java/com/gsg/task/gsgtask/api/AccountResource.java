@@ -65,7 +65,7 @@ public class AccountResource {
     public ResponseEntity<JWTToken> authorize(@RequestBody LoginDTO loginDTO) {
 
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(loginDTO.getLogin(), loginDTO.getPassword());
+                new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword());
 
         Authentication authentication = this.authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
