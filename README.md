@@ -8,9 +8,9 @@ instructions for running
  
     mvn spring-boot:run
     
-this command will install Node and npm locally,  build an angular 
-app and copies build  files to resources/static
-then starts spring-boot server with  url is http://localhost:8080
+this command will install Node and npm locally, build an angular 
+app and copy build  files to resources/static
+then starts spring-boot server with url http://localhost:8080.
 
 2.another way to run application is to start api and frontend app separately 
     
