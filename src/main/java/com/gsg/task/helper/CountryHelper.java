@@ -10,7 +10,7 @@ public class CountryHelper {
     private static final HashMap<String, String> countriesCode = new HashMap<>();
 
     static {
-        Locale.getISOCountries(Locale.IsoCountryCode.PART1_ALPHA2).stream().forEach(ccode -> {
+        Locale.getISOCountries(Locale.IsoCountryCode.PART1_ALPHA2).forEach(ccode -> {
             String displayName = new Locale("", ccode.toUpperCase()).getDisplayCountry();
             countriesName.put(displayName, ccode);
             countriesCode.put(ccode, displayName);
@@ -33,8 +33,8 @@ public class CountryHelper {
         return countriesCode.get(code);
     }
 
-    public static boolean countryIsCorrect(String countryCode) {
-        return countriesCode.get(countryCode) != null;
+    public static boolean countryIsIncorrect(String countryCode) {
+        return countriesCode.get(countryCode) == null;
     }
 
 }

@@ -13,6 +13,12 @@ public class AppException extends RuntimeException {
         this.type = type;
     }
 
+    public AppException(ExceptionType type, String message) {
+        super(type + ". message: " + message);
+        this.type = type;
+
+    }
+
     public String getExceptionKeyWord() {
         return type.getKeyWord();
     }

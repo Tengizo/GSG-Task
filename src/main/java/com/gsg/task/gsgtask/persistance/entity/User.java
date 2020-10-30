@@ -1,13 +1,12 @@
 package com.gsg.task.gsgtask.persistance.entity;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class User {
     private Long id;
     private String username;

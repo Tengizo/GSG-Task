@@ -43,7 +43,18 @@
 <div class="row justify-content-center m-3">
   <youtube-player *ngIf="user.ytVideoLink" [videoId]="getVideoId()"></youtube-player>
 </div>
-<div class="row justify-content-center m-3" >
+<ng-template #elseBlock>
+  <div class="row justify-content-center m-3">
+    <h2 class="m-2">Video not found</h2>
+  </div>
+</ng-template>
+
+<div *ngIf="commentText" class="row justify-content-center m-3">
   <h2 class="m-2">Most upvoted comment:</h2>
   <h3 [innerHTML]="commentText" class="m-2"></h3>
 </div>
+<ng-template #elseBlock>
+  <div class="row justify-content-center m-3">
+    <h2 class="m-2">Comment not found</h2>
+  </div>
+</ng-template>

@@ -1,13 +1,11 @@
 package com.gsg.task.gsgtask.external;
 
+import com.gsg.task.gsgtask.api.errors.exception.AppException;
+import com.gsg.task.gsgtask.api.errors.exception.ExceptionType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Service
 public class YTService {
@@ -28,50 +26,37 @@ public class YTService {
         restTemplate = new RestTemplate();
     }
 
+    /**
+     * returns trending videoId for passed region code
+     */
     public String getTrendingVideo(String regionCode) {
-        try {
-            Map res = restTemplate.getForObject(getTrendingVideoApiUrl(regionCode), Map.class);
-            return firstItemId(res);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
+        return callYoutube(getTrendingVideoApiUrl(regionCode), true);
     }
 
+    /**
+     * returns most relevant comment for passed videoId
+     */
     public String getComment(String videoId) {
-        try {
-            Map res = restTemplate.getForObject(getCommentApiUrl(videoId), Map.class);
-            return firstItemId(res);
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        return null;
+        return callYoutube(getCommentApiUrl(videoId), false);
     }
 
-    public String toLink(String videoId) {
+    /**
+     * generates youtube video link from youtube videoID
+     */
+    public String toVideoLink(String videoId) {
         return UriComponentsBuilder.fromHttpUrl(ytVideoLinkBase)
                 .queryParam("v", videoId)
                 .toUriString();
     }
-
+    /**
+     * generates youtube comment link from youtube videoID and commentId
+     */
     public String toCommentLink(String videoId, String commentId) {
         return UriComponentsBuilder.fromHttpUrl(ytVideoLinkBase)
                 .queryParam("v", videoId)
                 .queryParam("lc", commentId)
                 .toUriString();
     }
-
-    private String firstItemId(Map res) {
-        if (res != null) {
-            List<Map<String, String>> items = (ArrayList<Map<String, String>>) res.get("items");
-            if (items != null && items.size() > 0) {
-                String id = items.get(0).get("id");
-                return id;
-            }
-        }
-        return null;
-    }
-
 
     private String getTrendingVideoApiUrl(String regionCode) {
         return UriComponentsBuilder.fromHttpUrl(ytBaseUrl + ytTrendingUrl)
@@ -81,6 +66,20 @@ public class YTService {
                 .queryParam("regionCode", regionCode)
                 .queryParam("maxResults", 1).toUriString();
 
+    }
+
+    private String callYoutube(String ytURL, boolean rethrow) {
+        try {
+            YoutubeResponse res = restTemplate.getForObject(ytURL, YoutubeResponse.class);
+            if (res != null && res.getItems().size() > 0) {
+                return res.getItems().get(0).getId();
+            }
+            return null;
+        } catch (Exception e) {
+            if (rethrow)
+                throw new AppException(ExceptionType.YOUTUBE_SERVICE_PROBLEM, e.getMessage());
+            return null;
+        }
     }
 
     private String getCommentApiUrl(String videoId) {
@@ -93,10 +92,4 @@ public class YTService {
                 .queryParam("maxResults", 1).toUriString();
 
     }
-
-    private String addApiKeyParam(String url) {
-        return url + "?key=" + this.ytApiKey;
-    }
-
-
 }

@@ -19,6 +19,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * User repository is kind of communicator between csv file and application.
+ * at start it loads all the users and keeps them in Map for further uses.
+ */
+
 @Slf4j
 @Service
 @Scope(value = ConfigurableBeanFactory.SCOPE_SINGLETON)
@@ -38,6 +43,65 @@ public class UserRepository {
 
     }
 
+    /**
+     *
+     * @return User object if User exists otherwise null
+     */
+    public Optional<User> getUserByUsername(String username) {
+        return Optional.ofNullable(userMap.get(username));
+    }
+
+    public Optional<User> getUserById(Long id) {
+        return userMap.values().stream().filter(e -> e.getId().equals(id)).findAny();
+    }
+
+    public List<User> getAll() {
+        return new ArrayList<>(userMap.values());
+    }
+
+    /**
+     * adds user in the user map and adds new line for the new user in csv file
+     * it's synchronized because we have parallel tasks running
+     * and we don't want these tasks to mess up our csv :)
+     */
+    public synchronized User addUser(User user) {
+        user.setId(generateId());
+        writeUser(user, StandardOpenOption.APPEND);
+        userMap.put(user.getUsername(), user);
+        return user;
+    }
+
+    /**
+     * updates user in the user Map and updates csv file by rewriting the whole file.
+     *  it's synchronized because we have parallel tasks running
+     *  and we don't want these tasks to mess up our csv :)
+     */
+    public synchronized void updateUser(User user) {
+        Optional<User> userOp = getUserById(user.getId());
+        if (userOp.isEmpty()) {
+            throw new AppException(ExceptionType.USER_NOT_FOUND);
+        }
+        User fromDB = userOp.get();
+        userMap.remove(fromDB.getUsername());
+        userMap.put(user.getUsername(), user);
+        List<User> sorted = userMap.values().stream().sorted(Comparator.comparing(User::getId)).collect(Collectors.toList());
+        writeMultipleUser(sorted, StandardOpenOption.CREATE);
+    }
+
+    public synchronized void deleteUser(User user) {
+        Optional<User> userOp = getUserById(user.getId());
+        if (userOp.isEmpty()) {
+            throw new AppException(ExceptionType.USER_NOT_FOUND);
+        }
+        User fromDB = userOp.get();
+        userMap.remove(fromDB.getUsername());
+        List<User> sorted = userMap.values().stream().sorted(Comparator.comparing(User::getId)).collect(Collectors.toList());
+        writeMultipleUser(sorted, StandardOpenOption.CREATE);
+    }
+
+    /**
+     * writes CSV headers
+     */
     private void createHeaders() {
         try (
                 BufferedWriter writer = Files.newBufferedWriter(Path.of(CSVAbsolutePath), StandardOpenOption.CREATE);
@@ -56,7 +120,9 @@ public class UserRepository {
             throw new AppException(ExceptionType.CSV_DB_ERROR);
         }
     }
-
+    /**
+     * Creates csv files and directories if needed
+     */
     private void createFile() {
         String[] dirs = CSV_PATH.split("/");
         StringBuilder dirPath = new StringBuilder();
@@ -79,48 +145,6 @@ public class UserRepository {
             }
         }
         this.CSVAbsolutePath = file.getAbsolutePath();
-    }
-
-    public Optional<User> getUserByUsername(String username) {
-        return Optional.ofNullable(userMap.get(username));
-    }
-
-    public Optional<User> getUserById(Long id) {
-        return userMap.values().stream().filter(e -> e.getId().equals(id)).findAny();
-    }
-
-    public List<User> getAll() {
-        return new ArrayList<>(userMap.values());
-    }
-
-    public synchronized User addUser(User user) {
-        user.setId(generateId());
-        writeUser(user, StandardOpenOption.APPEND);
-        userMap.put(user.getUsername(), user);
-        return user;
-    }
-
-    public synchronized void updateUser(User user) {
-        Optional<User> userOp = getUserById(user.getId());
-        if (userOp.isEmpty()) {
-            throw new AppException(ExceptionType.USER_NOT_FOUND);
-        }
-        User fromDB = userOp.get();
-        userMap.remove(fromDB.getUsername());
-        userMap.put(user.getUsername(), user);
-        List<User> sorted = userMap.values().stream().sorted(Comparator.comparing(User::getId)).collect(Collectors.toList());
-        writeMultipleUser(sorted, StandardOpenOption.CREATE);
-    }
-
-    public synchronized void deleteUser(User user) {
-        Optional<User> userOp = getUserById(user.getId());
-        if (userOp.isEmpty()) {
-            throw new AppException(ExceptionType.USER_NOT_FOUND);
-        }
-        User fromDB = userOp.get();
-        userMap.remove(fromDB.getUsername());
-        List<User> sorted = userMap.values().stream().sorted(Comparator.comparing(User::getId)).collect(Collectors.toList());
-        writeMultipleUser(sorted, StandardOpenOption.CREATE);
     }
 
     private void writeUser(User user, StandardOpenOption... openOptions) {

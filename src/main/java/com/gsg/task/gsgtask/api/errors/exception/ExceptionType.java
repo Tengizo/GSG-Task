@@ -7,8 +7,9 @@ public enum ExceptionType {
     INVALID_USERNAME_OR_PASSWORD("invalid.username.or.password", 400, "Invalid username or password"),
     INVALID_USER("invalid.user", 400, "Invalid user"),
     INVALID_COUNTRY("invalid.country", 400, "Country name is Invalid"),
-    CSV_DB_ERROR("csv.db.error", 500, "Error with comunicating with db"),
+    CSV_DB_ERROR("csv.db.error", 500, "Error with communicating with db"),
     INVALID_TOKEN("invalid.token", 400, "Invalid JWT token"),
+    YOUTUBE_SERVICE_PROBLEM("yt.service.problem", -1, "Problem with youtube service connection"),
     SERVER_SIDE_EXCEPTION("server.side.exception", 500, "Unexpected exception occurred on the server");
 
     private final String keyWord;

@@ -42,25 +42,31 @@ public class UserService {
         this.addUser(dto.toUser());
     }
 
-    public void addUser(User user) {
+    /**
+     * adds user in the csv DB and creates new task for the new user
+     */
+    public User addUser(User user) {
         if (this.userRepository.getUserByUsername(user.getUsername()).isPresent()) {
             throw new AppException(ExceptionType.USERNAME_IS_USED);
         }
-        if (!CountryHelper.countryIsCorrect(user.getCountry())) {
+        if (CountryHelper.countryIsIncorrect(user.getCountry())) {
             throw new AppException(ExceptionType.INVALID_COUNTRY);
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User u = this.userRepository.addUser(user);
         this.taskRunner.addTask(u);
+        return u;
 
     }
-
+    /**
+     * updates 2 properties of user: JobInterval and Country
+     */
     public void updateUser(UserDTO dto) {
         Optional<User> userOp = this.userRepository.getUserById(dto.getId());
         if (userOp.isEmpty()) {
             throw new AppException(ExceptionType.USER_NOT_FOUND);
         }
-        if (!CountryHelper.countryIsCorrect(dto.getCountry())) {
+        if (CountryHelper.countryIsIncorrect(dto.getCountry())) {
             throw new AppException(ExceptionType.INVALID_COUNTRY);
         }
         User user = userOp.get();
