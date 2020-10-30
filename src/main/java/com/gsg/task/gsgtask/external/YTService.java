@@ -17,7 +17,7 @@ public class YTService {
     private String ytCommentUrl;
     @Value("${yt.video.base.link}")
     private String ytVideoLinkBase;
-    @Value("${yt.public.key}")
+    @Value("${yt.api.key}")
     private String ytApiKey;
     private final RestTemplate restTemplate;
 
